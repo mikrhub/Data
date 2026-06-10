@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>بيانات الخليج — استخراج بيانات الشركات من خرائط جوجل</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* =============================================
+       VARIABLES & RESET
+    ============================================= */
+    :root {
+      --green:       #2a7d4f;
+      --green-light: #e8f5ee;
+      --green-hover: #1f6040;
+      --gray-50:     #f8f9fa;
+      --gray-100:    #f1f3f5;
+      --gray-200:    #e9ecef;
+      --gray-400:    #adb5bd;
+      --gray-600:    #6c757d;
+      --gray-800:    #343a40;
+      --gray-900:    #212529;
+      --white:       #ffffff;
+      --shadow-xs:   0 1px 3px rgba(0,0,0,.06);
+      --shadow-sm:   0 2px 8px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --radius:      12px;
+      --radius-sm:   8px;
+      --max-w:       820px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+
+    /* =============================================
+       LAYOUT HELPERS
+    ============================================= */
+    .container {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    section {
+      padding: 60px 0;
+    }
+
+    /* =============================================
+       TOPBAR / ANNOUNCEMENT
+    ============================================= */
+    .topbar {
+      background: var(--green);
+      color: #fff;
+      text-align: center;
+      font-size: 13px;
+      padding: 9px 20px;
+      font-weight: 500;
+      letter-spacing: .01em;
+    }
+
+    /* =============================================
+       NAVBAR
+    ============================================= */
+    nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 20px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--green);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg { width: 20px; height: 20px; fill: #fff; }
+
+    .logo-text {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .logo-text span { color: var(--green); }
+
+    /* واتساب CTA في الـ navbar */
+    .nav-cta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--green);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 50px;
+      transition: background .2s;
+    }
+    .nav-cta:hover { background: var(--green-hover); }
+    .nav-cta svg { width: 16px; height: 16px; fill: #fff; }
+
+    /* =============================================
+       HERO
+    ============================================= */
+    .hero {
+      background: var(--white);
+      padding: 72px 0 64px;
+      text-align: center;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-light);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 50px;
+      margin-bottom: 22px;
+      letter-spacing: .03em;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 7px; height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+    }
+
+    .hero h1 {
+      font-size: clamp(26px, 5vw, 38px);
+      font-weight: 800;
+      line-height: 1.3;
+      color: var(--gray-900);
+      max-width: 600px;
+      margin: 0 auto 16px;
+    }
+
+    .hero h1 span { color: var(--green); }
+
+    .hero p {
+      color: var(--gray-600);
+      font-size: 16px;
+      max-width: 480px;
+      margin: 0 auto 32px;
+    }
+
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--green);
+      color: #fff;
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 12px 28px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+    .btn-primary:hover { background: var(--green-hover); transform: translateY(-1px); }
+    .btn-primary svg { width: 18px; height: 18px; fill: #fff; }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      color: var(--gray-800);
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 28px;
+      border-radius: 50px;
+      border: 1.5px solid var(--gray-200);
+      cursor: pointer;
+      transition: border-color .2s, transform .15s;
+    }
+    .btn-secondary:hover { border-color: var(--green); color: var(--green); transform: translateY(-1px); }
+
+    /* trust strip under hero */
+    .trust-strip {
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      margin-top: 36px;
+      flex-wrap: wrap;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+    .trust-item svg { width: 15px; height: 15px; fill: var(--green); flex-shrink: 0; }
+
+    /* =============================================
+       FEATURES  (3 نقاط)
+    ============================================= */
+    .features {
+      background: var(--gray-50);
+    }
+
+    .section-label {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: clamp(20px, 4vw, 26px);
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 40px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      box-shadow: var(--shadow-xs);
+      transition: box-shadow .2s, transform .2s;
+    }
+    .feature-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+    .feature-icon {
+      width: 44px; height: 44px;
+      background: var(--green-light);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .feature-icon svg { width: 22px; height: 22px; fill: var(--green); }
+
+    .feature-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--gray-900);
+    }
+
+    .feature-card p {
+      font-size: 13px;
+      color: var(--gray-600);
+      line-height: 1.6;
+    }
+
+    /* =============================================
+       STATS
+    ============================================= */
+    .stats {
+      background: var(--white);
+      border-top: 1px solid var(--gray-200);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 40px 16px;
+      border-left: 1px solid var(--gray-200);
+    }
+    .stat-item:last-child { border-left: none; }
+
+    .stat-number {
+      font-size: clamp(28px, 5vw, 38px);
+      font-weight: 800;
+      color: var(--green);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+
+    /* =============================================
+       PRICING
+    ============================================= */
+    .pricing {
+      background: var(--gray-50);
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px;
+    }
+
+    .pricing-card {
+      background: var(--white);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 26px 20px;
+      text-align: center;
+      box-shadow: var(--shadow-xs);
+      transition: box-shadow .2s, border-color .2s;
+      position: relative;
+    }
+    .pricing-card:hover { box-shadow: var(--shadow-md); border-color: var(--green); }
+
+    /* بطاقة مميزة */
+    .pricing-card.featured {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+    }
+    .pricing-card.featured .pricing-price,
+    .pricing-card.featured .pricing-name,
+    .pricing-card.featured .pricing-qty { color: #fff; }
+    .pricing-card.featured .pricing-per { color: rgba(255,255,255,.75); }
+    .pricing-card.featured .pricing-badge { background: rgba(255,255,255,.2); color: #fff; }
+
+    .pricing-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 50px;
+      background: var(--green-light);
+      color: var(--green);
+      margin-bottom: 12px;
+    }
+
+    .pricing-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    .pricing-qty {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1;
+    }
+
+    .pricing-qty span { font-size: 13px; font-weight: 500; color: var(--gray-600); }
+
+    .pricing-price {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--green);
+      margin: 10px 0 4px;
+    }
+
+    .pricing-per {
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-bottom: 18px;
+    }
+
+    .pricing-cta {
+      display: block;
+      background: var(--green);
+      color: #fff;
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 9px 0;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: background .2s;
+      width: 100%;
+    }
+    .pricing-cta:hover { background: var(--green-hover); }
+
+    .pricing-card.featured .pricing-cta {
+      background: #fff;
+      color: var(--green);
+    }
+    .pricing-card.featured .pricing-cta:hover { background: var(--gray-100); }
+
+    /* =============================================
+       PAYMENT METHODS
+    ============================================= */
+    .payments {
+      background: var(--white);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .payment-grid {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .payment-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 50px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-800);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .payment-pill:hover { border-color: var(--green); box-shadow: var(--shadow-sm); }
+    .payment-pill img, .payment-pill svg { width: 22px; height: 22px; }
+
+    /* =============================================
+       PORTFOLIO (أعمال سابقة)
+    ============================================= */
+    .portfolio {
+      background: var(--gray-50);
+    }
+
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+    }
+
+    .portfolio-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-xs);
+      transition: box-shadow .2s, transform .2s;
+    }
+    .portfolio-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+    .portfolio-thumb {
+      height: 140px;
+      background: var(--green-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* طبقة بيانات مزيفة للبريفيو */
+    .portfolio-thumb .data-preview {
+      width: 90%;
+      background: var(--white);
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow-sm);
+      font-size: 11px;
+      color: var(--gray-700);
+      line-height: 1.8;
+    }
+    .portfolio-thumb .data-preview strong { color: var(--green); font-size: 10px; display: block; margin-bottom: 4px; }
+    .data-row { display: flex; gap: 8px; align-items: center; }
+    .data-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+    .portfolio-body {
+      padding: 18px 18px 20px;
+    }
+
+    .portfolio-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green);
+      background: var(--green-light);
+      padding: 2px 10px;
+      border-radius: 50px;
+      margin-bottom: 8px;
+    }
+
+    .portfolio-body h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--gray-900);
+    }
+
+    .portfolio-body p {
+      font-size: 12px;
+      color: var(--gray-600);
+      margin-bottom: 14px;
+    }
+
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      border: 1.5px solid var(--green);
+      padding: 6px 16px;
+      border-radius: 50px;
+      cursor: pointer;
+      background: transparent;
+      transition: background .2s, color .2s;
+    }
+    .btn-outline:hover { background: var(--green); color: #fff; }
+    .btn-outline svg { width: 13px; height: 13px; fill: currentColor; }
+
+    /* =============================================
+       PROCESS (كيف يعمل)
+    ============================================= */
+    .process {
+      background: var(--white);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .steps {
+      display: flex;
+      gap: 0;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .step {
+      flex: 1;
+      min-width: 150px;
+      max-width: 200px;
+      text-align: center;
+      padding: 0 16px;
+      position: relative;
+    }
+
+    .step:not(:last-child)::after {
+      content: '←';
+      position: absolute;
+      left: -10px;
+      top: 18px;
+      color: var(--gray-400);
+      font-size: 18px;
+    }
+
+    .step-num {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--green-light);
+      color: var(--green);
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+    }
+
+    .step h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .step p {
+      font-size: 12px;
+      color: var(--gray-600);
+    }
+
+    /* =============================================
+       FORM
+    ============================================= */
+    .form-section {
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .form-wrap {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 36px 32px;
+      box-shadow: var(--shadow-sm);
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .form-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .form-subtitle {
+      font-size: 13px;
+      color: var(--gray-600);
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full { grid-column: 1 / -1; }
+
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .form-group input,
+    .form-group select {
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      padding: 10px 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      color: var(--gray-900);
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--green);
+    }
+
+    .form-group select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+
+    .form-submit {
+      margin-top: 20px;
+      width: 100%;
+      justify-content: center;
+      font-size: 15px;
+      padding: 13px;
+    }
+
+    .form-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-top: 12px;
+    }
+
+    /* =============================================
+       FAQ
+    ============================================= */
+    .faq {
+      background: var(--white);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .faq-list {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .faq-item {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .faq-q {
+      width: 100%;
+      background: transparent;
+      border: none;
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-900);
+      padding: 15px 18px;
+      text-align: right;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      transition: background .15s;
+    }
+    .faq-q:hover { background: var(--gray-50); }
+    .faq-q .arrow { font-size: 12px; color: var(--gray-400); transition: transform .2s; flex-shrink: 0; }
+    .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .3s ease, padding .3s;
+      font-size: 13px;
+      color: var(--gray-600);
+      line-height: 1.7;
+      padding: 0 18px;
+    }
+    .faq-item.open .faq-a {
+      max-height: 200px;
+      padding: 0 18px 16px;
+    }
+
+    /* =============================================
+       FOOTER
+    ============================================= */
+    footer {
+      background: var(--gray-900);
+      color: var(--gray-400);
+      text-align: center;
+      padding: 36px 20px;
+      font-size: 13px;
+    }
+
+    footer .footer-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    footer .footer-logo-icon {
+      width: 32px; height: 32px;
+      background: var(--green);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    footer .footer-logo-icon svg { width: 16px; height: 16px; fill: #fff; }
+    footer .footer-logo span { font-size: 16px; font-weight: 700; color: #fff; }
+
+    footer p { margin-bottom: 16px; line-height: 1.6; }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .footer-links a { color: var(--gray-400); font-size: 12px; transition: color .2s; }
+    .footer-links a:hover { color: var(--green); }
+
+    .footer-copy { font-size: 12px; color: #555; }
+
+    /* =============================================
+       RESPONSIVE
+    ============================================= */
+    @media (max-width: 600px) {
+      section { padding: 44px 0; }
+
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-item:nth-child(2) { border-left: none; }
+      .stat-item:nth-child(3) { border-top: 1px solid var(--gray-200); }
+      .stat-item:nth-child(4) { border-top: 1px solid var(--gray-200); border-left: none; }
+
+      .form-grid { grid-template-columns: 1fr; }
+
+      .step:not(:last-child)::after { display: none; }
+
+      .form-wrap { padding: 24px 18px; }
+
+      .nav-cta span { display: none; }
+    }
+
+       /* الأنشطة الأكثر طلباً */
+    .popular-activities {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--gray-200);
+      text-align: center;
+    }
+
+    .activity-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gray-500);
+      margin-bottom: 14px;
+      letter-spacing: 0.3px;
+    }
+
+    .activity-label svg {
+      fill: var(--green);
+    }
+
+    .activity-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .activity-tag {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      background: var(--gray-100);
+      padding: 5px 14px;
+      border-radius: 20px;
+      transition: all 0.2s ease;
+      cursor: default;
+    }
+
+    .activity-tag:hover {
+      background: var(--green);
+      color: white;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-light);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 50px;
+      margin-bottom: 22px;
+    }
+
+    .badge-icon {
+      fill: var(--green);
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       TOPBAR — شريط الإعلان
+       عدّل النص هنا
+  ============================================================ -->
+  <div class="topbar">
+    🚀 نوفر البيانات خلال 24 ساعة — جاهزة للاستخدام الفوري
+  </div>
+
+  <!-- ============================================================
+       NAV
+  ============================================================ -->
+  <nav>
+    <div class="nav-inner">
+      <!-- الشعار — عدّل اسم الخدمة هنا -->
+      <div class="logo">
+        <div class="logo-icon">
+          <!-- أيقونة خريطة -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+          </svg>
+        </div>
+        <div class="logo-text">بيانات <span>الخليج</span></div>
+      </div>
+      <!-- زر واتساب — عدّل رقم الواتساب هنا -->
+      <a href="https://wa.me/212771295029" target="_blank" class="nav-cta">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        <span>تواصل معنا</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       HERO
+  ============================================================ -->
+  <section class="hero">
+    <div class="container">
+      
+      <div class="hero-badge">
+        <svg class="badge-icon" viewBox="0 0 24 24" width="14" height="14">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+        أكثر من 200 عميل وثقوا بنا
+      </div>
+      <h1>
+        استخرج بيانات أي نشاط تجاري 
+        <span>في دول الخليج</span>
+        <br/>من خرائط جوجل
+      </h1>
+      <p>
+        عقارات • مطاعم • صالونات • عيادات • محلات • مقاولات • فنادق • مدارس • صيدليات • شركات
+        <br/>نستخرج لك كل ما تحتاجه — بيانات دقيقة ومنظمة جاهزة للتواصل الفوري
+      </p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="document.getElementById('order-form').scrollIntoView({behavior:'smooth'})">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14l4-4h12c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+          </svg>
+          اطلب بياناتك الآن
+        </button>
+        <a href="https://docs.google.com/spreadsheets/d/example" target="_blank" class="btn-secondary">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>
+          </svg>
+          معاينة نموذج مجاني
+        </a>
+      </div>
+
+      <!-- شريط الأنشطة الأكثر طلباً في الخليج -->
+      <div class="popular-activities">
+        <div class="activity-label">
+          <svg viewBox="0 0 24 24" width="14" height="14">
+            <path d="M12 2L15 8.5L22 9.5L17 14L18.5 21L12 17.5L5.5 21L7 14L2 9.5L9 8.5L12 2z"/>
+          </svg>
+          الأكثر طلباً هذا الشهر
+        </div>
+        <div class="activity-tags">
+          <span class="activity-tag">عقارات</span>
+          <span class="activity-tag">مطاعم</span>
+          <span class="activity-tag">صالونات</span>
+          <span class="activity-tag">عيادات</span>
+          <span class="activity-tag">محلات تجارية</span>
+          <span class="activity-tag">مقاولات</span>
+          <span class="activity-tag">فنادق</span>
+        </div>
+      </div>
+  
+
+      <div class="trust-strip">
+        <span class="trust-item">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          بيانات محدّثة
+        </span>
+        <span class="trust-item">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          تسليم خلال 24 ساعة
+        </span>
+        <span class="trust-item">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          ملف Excel / CSV جاهز
+        </span>
+        <span class="trust-item">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          دعم مباشر عبر واتساب
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FEATURES — شرح الخدمة في 3 نقاط
+  ============================================================ -->
+  <section class="features">
+    <div class="container">
+      <p class="section-label">لماذا نحن</p>
+      <h2 class="section-title">كل ما تحتاجه في ملف واحد</h2>
+      <div class="features-grid">
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+          </div>
+          <h3>بيانات دقيقة ومحدّثة</h3>
+          <p>نستخرج الاسم، رقم الهاتف، الموقع، التقييم، ساعات العمل والموقع الإلكتروني مباشرةً من خرائط جوجل.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+          </div>
+          <h3>مُصنَّفة حسب التخصص</h3>
+          <p>سواء كنت تبحث عن مطاعم، عيادات، محلات، شركات مقاولات أو أي قطاع آخر — نفلترها لك بدقة.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+          </div>
+          <h3>تسليم فوري وجاهز للاستخدام</h3>
+          <p>تستلم ملف Excel أو CSV منظّم يمكنك فتحه فوراً وتصديره لأدوات التسويق والـ CRM بدون أي معالجة إضافية.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       STATS — إحصائيات
+       عدّل الأرقام هنا
+  ============================================================ -->
+  <section class="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-number">700K+</div>
+          <div class="stat-label">سجل تم استخراجه</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">8+</div>
+          <div class="stat-label">دول خليجية مدعومة</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">197+</div>
+          <div class="stat-label">عميل راضٍ</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">24h</div>
+          <div class="stat-label">وقت التسليم</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PROCESS — كيف تعمل الخدمة
+  ============================================================ -->
+
+
+<!-- ============================================
+     PROCESS + FREE SAMPLE (مميز جداً)
+  ============================================ -->
+  <section class="process" style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);">
+    <div class="container">
+      <p class="section-label">الطريقة</p>
+      <h2 class="section-title">5 خطوات فقط لبياناتك</h2>
+
+      <!-- الخطوات الرئيسية -->
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">١</div>
+          <h4>أرسل طلبك</h4>
+          <p>حدد المدينة والتخصص وعدد الشركات</p>
+        </div>
+        <div class="step">
+          <div class="step-num">٢</div>
+          <h4>🎁 نرسل لك عينة</h4>
+          <p>قبل أي التزام، تستلم نموذجاً مجانياً لترى الجودة بنفسك</p>
+        </div>
+        <div class="step">
+          <div class="step-num">٣</div>
+          <h4>تؤكد الطلب</h4>
+          <p>بعد إعجابك بالعينة، تؤكد وتدفع</p>
+        </div>
+        <div class="step">
+          <div class="step-num">٤</div>
+          <h4>نعمل ونستخرج</h4>
+          <p>نستخرج البيانات ونراجعها بدقة</p>
+        </div>
+        <div class="step">
+          <div class="step-num">٥</div>
+          <h4>تستلم كامل الملف</h4>
+          <p>خلال 24 ساعة — Excel جاهز</p>
+        </div>
+      </div>
+
+      <!-- عرض العينة - تصميم مميز -->
+      <div style="margin-top: 56px; text-align: center;">
+        <div style="background: linear-gradient(135deg, #eafaf1 0%, #d4f0e4 100%); border-radius: 32px; padding: 40px 28px; max-width: 550px; margin: 0 auto; border: 1px solid rgba(42,125,79,0.2);">
+          <div style="font-size: 48px; margin-bottom: 8px;"></div>
+          <h3 style="font-size: 24px; font-weight: 800; color: #1f6040; margin-bottom: 12px;">عينة مجانية قبل الطلب</h3>
+          <p style="font-size: 15px; color: #2c5a45; margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">
+            لاتثق بكلامنا — جرب بنفسك. نرسل لك نموذجاً من البيانات التي سنستخرجها، وعندها فقط تقرر.
+          </p>
+          <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">
+            <button onclick="requestFreeSample()" class="btn-primary" style="background: #1f6040; padding: 14px 32px; font-size: 15px;">
+               طلب عينة مجانية الآن
+            </button>
+            <a href="https://docs.google.com/spreadsheets/d/example" target="_blank" class="btn-secondary" style="background: white;">
+               معاينة نموذج مباشر
+            </a>
+          </div>
+          <p style="font-size: 12px; color: #3b7558; margin-top: 20px;">
+             بدون بطاقة ائتمان — بدون أي التزام
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+ <!--  <section class="process">
+    <div class="container">
+      <p class="section-label">الطريقة</p>
+      <h2 class="section-title">4 خطوات فقط</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">١</div>
+          <h4>أرسل طلبك</h4>
+          <p>حدد المدينة والتخصص وعدد الشركات</p>
+        </div>
+        <div class="step">
+          <div class="step-num">٢</div>
+          <h4>ندفع</h4>
+          <p>عبر PayPal أو Binance أو خمسات</p>
+        </div>
+        <div class="step">
+          <div class="step-num">٣</div>
+          <h4>نعمل</h4>
+          <p>نستخرج البيانات ونراجعها بدقة</p>
+        </div>
+        <div class="step">
+          <div class="step-num">٤</div>
+          <h4>تستلم</h4>
+          <p>ملف Excel/CSV خلال 24 ساعة</p>
+        </div>
+      </div>
+    </div>
+  </section> -->
+
+  <!-- ============================================================
+       PRICING — الأسعار
+       عدّل الأسعار والكميات هنا
+  ============================================================ -->
+  <section class="pricing">
+    <div class="container">
+      <p class="section-label">الباقات</p>
+      <h2 class="section-title">اختر الباقة المناسبة</h2>
+      <div class="pricing-grid">
+
+        <!-- باقة 1 -->
+        <div class="pricing-card">
+          <div class="pricing-badge">مبتدئ</div>
+          <div class="pricing-name">باقة البداية</div>
+          <div class="pricing-qty">500 <span>سجل</span></div>
+          <div class="pricing-price">15$</div>
+          <div class="pricing-per">0.03$ لكل سجل</div>
+          <!-- عدّل رقم الواتساب هنا -->
+          <button class="pricing-cta" onclick="openWhatsApp('باقة البداية - 500 سجل - 15$')">اطلب الآن</button>
+        </div>
+
+        <!-- باقة 2 — مميزة -->
+        <div class="pricing-card featured">
+          <div class="pricing-badge">الأكثر طلباً ⭐</div>
+          <div class="pricing-name">باقة الأعمال</div>
+          <div class="pricing-qty">2000 <span>سجل</span></div>
+          <div class="pricing-price">45$</div>
+          <div class="pricing-per">0.022$ لكل سجل</div>
+          <button class="pricing-cta" onclick="openWhatsApp('باقة الأعمال - 2000 سجل - 45$')">اطلب الآن</button>
+        </div>
+
+        <!-- باقة 3 -->
+        <div class="pricing-card">
+          <div class="pricing-badge">متقدم</div>
+          <div class="pricing-name">باقة الاحترافية</div>
+          <div class="pricing-qty">5000 <span>سجل</span></div>
+          <div class="pricing-price">90$</div>
+          <div class="pricing-per">0.018$ لكل سجل</div>
+          <button class="pricing-cta" onclick="openWhatsApp('باقة الاحترافية - 5000 سجل - 90$')">اطلب الآن</button>
+        </div>
+
+        <!-- باقة 4 — مخصصة -->
+        <div class="pricing-card">
+          <div class="pricing-badge">مخصص</div>
+          <div class="pricing-name">باقة الشركات</div>
+          <div class="pricing-qty">+10K <span>سجل</span></div>
+          <div class="pricing-price">تواصل</div>
+          <div class="pricing-per">سعر خاص بالكمية</div>
+          <button class="pricing-cta" onclick="openWhatsApp('أريد باقة مخصصة للشركات')">احصل على سعر</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PAYMENT METHODS — طرق الدفع
+       عدّل الروابط هنا
+  ============================================================ -->
+  <section class="payments">
+    <div class="container">
+      <p class="section-label">الدفع</p>
+      <h2 class="section-title">طرق الدفع المتاحة</h2>
+      <div class="payment-grid">
+
+        <!-- PayPal — عدّل الرابط هنا -->
+        <a href="https://paypal.me/arabdata" target="_blank" class="payment-pill">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;fill:#003087">
+            <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 4.643-5.813 4.643h-2.189a.64.64 0 0 0-.633.54l-1.46 9.26-.42 2.661a.336.336 0 0 0 .332.387h3.554c.46 0 .85-.334.922-.787l.038-.196.728-4.617.047-.254a.932.932 0 0 1 .922-.787h.58c3.76 0 6.701-1.527 7.559-5.945.36-1.846.174-3.387-.52-4.618z"/>
+          </svg>
+          PayPal
+        </a>
+
+        <!-- Binance — عدّل الرابط هنا -->
+        <a href="https://binance.me/498674208" target="_blank" class="payment-pill">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;fill:#F3BA2F">
+            <path d="M12 0L7.5 4.5l1.77 1.77L12 3.54l2.73 2.73L16.5 4.5 12 0zM4.5 7.5L0 12l4.5 4.5 1.77-1.77L3.54 12l2.73-2.73L4.5 7.5zm15 0l-1.77 1.77L20.46 12l-2.73 2.73L19.5 16.5 24 12l-4.5-4.5zM12 8.46L8.46 12 12 15.54 15.54 12 12 8.46zm0 7.5l-2.73 2.73L12 21.46l2.73-2.73L12 15.96zm-1.77 2.77L7.5 19.5 12 24l4.5-4.5-2.73-2.73L12 18.96l-1.77-1.73z"/>
+          </svg>
+          Binance Pay
+        </a>
+
+        <!-- واتساب -->
+        <a href="https://wa.me/212771295029" target="_blank" class="payment-pill">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;fill:#25D366">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          دفع عبر واتساب
+        </a>
+
+        <!-- خمسات -->
+        <a href="https://khamsat.com/" target="_blank" class="payment-pill">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;fill:#FF6B35">
+            <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+          </svg>
+          خمسات
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PORTFOLIO — أعمال سابقة
+       عدّل الروابط والعناوين هنا
+  ============================================================ -->
+  <section class="portfolio">
+    <div class="container">
+      <p class="section-label">أعمالنا</p>
+      <h2 class="section-title">نماذج من أعمالنا السابقة</h2>
+      <div class="portfolio-grid">
+
+        <!-- عمل 1 -->
+        <div class="portfolio-card">
+          <div class="portfolio-thumb">
+            <div class="data-preview">
+              <strong>🏥 عيادات الرياض</strong>
+              <div class="data-row"><div class="data-dot"></div> عيادة الدكتور أحمد | 05xxxxxxxx</div>
+              <div class="data-row"><div class="data-dot"></div> مركز النور الطبي | 05xxxxxxxx</div>
+              <div class="data-row"><div class="data-dot"></div> عيادات الشفاء | 05xxxxxxxx</div>
+            </div>
+          </div>
+          <div class="portfolio-body">
+            <span class="portfolio-tag">المملكة العربية السعودية</span>
+            <h3>عيادات ومراكز طبية — الرياض</h3>
+            <p>1,200 سجل · أرقام + مواقع + تقييمات</p>
+            <!-- عدّل رابط Google Sheets هنا -->
+            <a href="https://docs.google.com/spreadsheets/d/example" target="_blank" class="btn-outline">
+              <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+              معاينة البيانات
+            </a>
+          </div>
+        </div>
+
+        <!-- عمل 2 -->
+        <div class="portfolio-card">
+          <div class="portfolio-thumb">
+            <div class="data-preview">
+              <strong>🍽️ مطاعم دبي</strong>
+              <div class="data-row"><div class="data-dot"></div> مطعم البيت | 0501xxxxxx</div>
+              <div class="data-row"><div class="data-dot"></div> مطعم الكرم | 0502xxxxxx</div>
+              <div class="data-row"><div class="data-dot"></div> كافيه ذا بلس | 0503xxxxxx</div>
+            </div>
+          </div>
+          <div class="portfolio-body">
+            <span class="portfolio-tag">الإمارات</span>
+            <h3>مطاعم وكافيهات — دبي</h3>
+            <p>3,500 سجل · كامل مع المواقع</p>
+            <a href="https://docs.google.com/spreadsheets/d/example" target="_blank" class="btn-outline">
+              <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+              معاينة البيانات
+            </a>
+          </div>
+        </div>
+
+        <!-- عمل 3 -->
+        <div class="portfolio-card">
+          <div class="portfolio-thumb">
+            <div class="data-preview">
+              <strong>🏗️ مقاولون الكويت</strong>
+              <div class="data-row"><div class="data-dot"></div> شركة البناء الحديث | 9xxxxxxx</div>
+              <div class="data-row"><div class="data-dot"></div> مقاولات الخليج | 9xxxxxxx</div>
+              <div class="data-row"><div class="data-dot"></div> شركة العمران | 9xxxxxxx</div>
+            </div>
+          </div>
+          <div class="portfolio-body">
+            <span class="portfolio-tag">الكويت</span>
+            <h3>شركات مقاولات — الكويت</h3>
+            <p>800 سجل · مع مواقع الويب</p>
+            <a href="https://docs.google.com/spreadsheets/d/example" target="_blank" class="btn-outline">
+              <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+              معاينة البيانات
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       ORDER FORM — نموذج الطلب
+       عند الإرسال يفتح واتساب برسالة منسقة
+  ============================================================ -->
+  <section class="form-section" id="order-form">
+    <div class="container">
+      <div class="form-wrap">
+        <div class="form-title">أرسل طلبك الآن</div>
+        <div class="form-subtitle">أملأ النموذج وسنرد عليك خلال دقائق ✅</div>
+
+        <div class="form-grid">
+
+          <!-- الاسم -->
+          <div class="form-group">
+            <label for="fname">الاسم الكامل</label>
+            <input type="text" id="fname" placeholder="محمد أحمد" />
+          </div>
+
+          <!-- الدولة / المدينة -->
+          <div class="form-group">
+            <label for="fcity">المدينة أو الدولة</label>
+            <input type="text" id="fcity" placeholder="مثال: الرياض، دبي..." />
+          </div>
+
+          <!-- التخصص -->
+          <div class="form-group">
+            <label for="fcat">التخصص / القطاع</label>
+            <!-- عدّل الخيارات حسب احتياجك -->
+            <select id="fcat">
+              <option value="">اختر التخصص</option>
+              <option>مطاعم وكافيهات</option>
+              <option>عيادات ومراكز طبية</option>
+              <option>شركات مقاولات</option>
+              <option>محلات تجارية</option>
+              <option>فنادق وشقق</option>
+              <option>صالونات حلاقة وتجميل</option>
+              <option>مدارس وتعليم</option>
+              <option>صيدليات</option>
+              <option>تخصص آخر</option>
+            </select>
+          </div>
+
+          <!-- عدد الشركات -->
+          <div class="form-group">
+            <label for="fcount">عدد السجلات المطلوبة</label>
+            <select id="fcount">
+              <option value="">اختر الكمية</option>
+              <option>500 سجل</option>
+              <option>1,000 سجل</option>
+              <option>2,000 سجل</option>
+              <option>5,000 سجل</option>
+              <option>+10,000 سجل</option>
+            </select>
+          </div>
+
+          <!-- ملاحظات إضافية -->
+          <div class="form-group full">
+            <label for="fnotes">ملاحظات إضافية (اختياري)</label>
+            <input type="text" id="fnotes" placeholder="مثال: فقط الشركات التي لها موقع إلكتروني..." />
+          </div>
+
+        </div>
+
+        <button class="btn-primary form-submit" onclick="submitForm()">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          إرسال الطلب عبر واتساب
+        </button>
+        <p class="form-note">🔒 بياناتك محمية ولن تُشارك مع أي طرف ثالث</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FAQ — أسئلة شائعة
+  ============================================================ -->
+  <section class="faq">
+    <div class="container">
+      <p class="section-label">الأسئلة الشائعة</p>
+      <h2 class="section-title">أجوبة على أكثر الأسئلة شيوعاً</h2>
+      <div class="faq-list">
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            ما هي الحقول المتضمنة في الملف؟
+            <span class="arrow">▼</span>
+          </button>
+          <div class="faq-a">
+            الملف يحتوي على: اسم الشركة، رقم الهاتف، العنوان، الإحداثيات (خط الطول والعرض)، تقييم جوجل، عدد التقييمات، ساعات العمل، الموقع الإلكتروني (إن وُجد)، وصف مختصر.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            ما هي صيغة الملف الذي سأستلمه؟
+            <span class="arrow">▼</span>
+          </button>
+          <div class="faq-a">
+            نوفر الملف بصيغة Excel (.xlsx) وCSV قابلة للاستخدام مباشرة في أدوات التسويق وقواعد البيانات وأنظمة CRM.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            كيف أضمن أن البيانات حديثة؟
+            <span class="arrow">▼</span>
+          </button>
+          <div class="faq-a">
+            نستخرج البيانات فور استلام طلبك مباشرةً من خرائط جوجل، مما يضمن حداثتها ودقتها وقت التسليم.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            هل يمكنني طلب مدينة أو دولة بعينها؟
+            <span class="arrow">▼</span>
+          </button>
+          <div class="faq-a">
+            نعم، نغطي جميع دول الخليج: السعودية، الإمارات، الكويت، قطر، البحرين وعُمان. يمكنك تحديد المدينة أو المنطقة بدقة.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            ماذا لو كانت هناك بيانات ناقصة أو مكررة؟
+            <span class="arrow">▼</span>
+          </button>
+          <div class="faq-a">
+            نراجع الملف ونحذف المكررات قبل التسليم. في حال وجود خلل يتجاوز 5% من البيانات، نعيد الاستخراج مجاناً.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================ -->
+  <footer>
+    <div class="footer-logo">
+      <div class="footer-logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+        </svg>
+      </div>
+      <span>بيانات الخليج</span>
+    </div>
+    <p>خدمة احترافية لاستخراج بيانات الشركات من خرائط جوجل في دول الخليج العربي</p>
+    <div class="footer-links">
+      <!-- عدّل روابط التواصل هنا -->
+      <a href="https://wa.me/212771295029" target="_blank">واتساب</a>
+      <a href="https://paypal.me/arabdata" target="_blank">PayPal</a>
+      <a href="https://binance.me/498674208" target="_blank">Binance</a>
+      <a href="https://khamsat.com/" target="_blank">خمسات</a>
+    </div>
+    <div class="footer-copy">© 2025 بيانات الخليج — جميع الحقوق محفوظة</div>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT
+  ============================================================ -->
+  <script>
+    // =============================================
+    // فتح واتساب برسالة منسقة من النموذج
+    // عدّل رقم الواتساب هنا: 212771295029
+    // =============================================
+    function submitForm() {
+      const name  = document.getElementById('fname').value.trim();
+      const city  = document.getElementById('fcity').value.trim();
+      const cat   = document.getElementById('fcat').value;
+      const count = document.getElementById('fcount').value;
+      const notes = document.getElementById('fnotes').value.trim();
+
+      if (!name || !city || !cat || !count) {
+        alert('يرجى ملء جميع الحقول المطلوبة');
+        return;
+      }
+
+      // تنسيق الرسالة
+      const msg =
+        `مرحباً، أريد طلب بيانات 🗺️\n\n` +
+        `👤 الاسم: ${name}\n` +
+        `📍 المدينة / الدولة: ${city}\n` +
+        `🏷️ التخصص: ${cat}\n` +
+        `📊 عدد السجلات: ${count}\n` +
+        (notes ? `📝 ملاحظات: ${notes}\n` : '') +
+        `\nأرجو التواصل لإتمام الطلب، شكراً!`;
+
+      // عدّل رقم الواتساب هنا
+      const phone = '212771295029';
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // =============================================
+    // فتح واتساب من بطاقات الأسعار
+    // =============================================
+    function openWhatsApp(pkg) {
+      const msg = `مرحباً، أريد الاشتراك في: ${pkg} 🗺️\nأرجو التواصل لإتمام الطلب.`;
+      const phone = '212771295029'; // عدّل الرقم هنا
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // =============================================
+    // FAQ accordion
+    // =============================================
+    function toggleFaq(btn) {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      // أغلق الكل
+      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    }
+
+    // طلب عينة مجانية
+function requestFreeSample() {
+  const msg = `مرحباً، أريد طلب عينة مجانية قبل الطلب 🎁\nأرجو إرسال نموذج من بياناتكم لأرى الجودة.`;
+  window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+  </script>
+
+</body>
+</html>
